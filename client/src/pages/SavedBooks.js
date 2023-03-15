@@ -18,9 +18,9 @@ const SavedBooks = () => {
   // use this to determine if `useEffect()` hook needs to run again
   const userDataLength = Object.keys(userData).length;
 //SAMPLE QUERY
-const { loading, userData } = useQuery(GET_ME);
+const { loading, getUserData } = useQuery(GET_ME);
 
-const userData = data?.me || {};
+setUserData (getUserData?.me || {});
 // navigate to personal profile page if username is yours
 if (Auth.loggedIn() && Auth.getProfile().data.username === userParam) {
   return <Navigate to="/me" />;
@@ -74,13 +74,13 @@ if (!user?.username) {
           query: GET_ME,
           data: { me: removeBook },
         });
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error(error);
       }
     },
   });
 
-  const handleRemoveBook = async (book) => {
+  const handleDeleteBook = async (bookId) => {
     try {
       const { data } = await removeBook({
         variables: { bookId },
