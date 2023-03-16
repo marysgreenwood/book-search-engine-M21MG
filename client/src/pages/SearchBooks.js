@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Container, Col, Form, Button, Card, Row } from "react-bootstrap";
 
 import Auth from "../utils/auth";
-import { SAVE_BOOK } from "../utils/mutations";
-import { saveBookIds, getSavedBookIds } from "../utils/localStorage";
 import { useMutation } from "@apollo/client";
+import { searchGoogleBooks } from "../utils/API";
+import { SAVE_BOOK } from "../utils/mutations";
+import { GET_ME } from "../utils/queries";
+import { saveBookIds, getSavedBookIds } from "../utils/localStorage";
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -19,6 +21,24 @@ const SearchBooks = () => {
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
+  });
+
+  //useMutation hook to save book
+  const [saveBook, { error }] = useMutation(SAVE_BOOK, {
+    update(cache, { data: { saveBook } }) {
+      try {
+        setSavedBookIds([...saveBook]);
+      } catch (e) {
+        console.error(e);
+      }
+
+      // update me object's cache
+      const { me } = cache.readQuery({ query: GET_ME });
+      cache.writeQuery({
+        query: GET_ME,
+        data: { me: { ...me, savedBooks: [...me.savedBooks, saveBook] } },
+      });
+    },
   });
 
   // create method to search for books and set state on form submit
@@ -54,16 +74,32 @@ const SearchBooks = () => {
   };
 
   // create function to handle saving a book to our database
+  const handleSaveBook = async (event, bookId) => {
+    event.preventDefault();
 
-  const handleSaveBook = useMutation(SAVE_BOOK, {
-    update(cache, { data: { handleSaveBook } }) {
-      try {
-        setSavedBookIds([...savedBookIds, bookToSave.bookId]);
-      } catch (err) {
-        console.error(err);
-      }
-    },
-  });
+    try {
+      const data = await saveBook({
+        variables: { bookId },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //const handleFormSubmit = async (event) => {
+  //   event.preventDefault();
+
+  //   try {
+  //     const data = await addSkill({
+  //       variables: { profileId, skill },
+  //     });
+
+  //     setSkill('');
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
+  //const handleSaveBook =
   // original fx using API
   // const handleSaveBook = async (bookId) => {
   //   // find the book in `searchedBooks` state by the matching id
